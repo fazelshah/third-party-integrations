@@ -17,7 +17,7 @@ app.post('/v1', async (context) => {
          * A mechanism is needed to protect this endpoint from attacks such as malicious third parties spoofing Stripe's webhook event objects and sending requests.
          * In this case, you can protect the API by issuing a webhook secret and verifying each request.
          */
-        const { STRIPE_WEBHOOK_SECRET, CRYPTLEX_PRODUCT_ID, CRYPTLEX_ACCESS_TOKEN } = env(context);
+        const { STRIPE_WEBHOOK_SECRET, CRYPTLEX_PRODUCT_ID, CRYPTLEX_ACCESS_TOKEN, CRYPTLEX_WEB_API_BASE_URL } = env(context);
 
         if (typeof (STRIPE_WEBHOOK_SECRET) !== 'string') {
             throw Error('STRIPE_WEBHOOK_SECRET was not found in environment variables.');
@@ -31,8 +31,12 @@ app.post('/v1', async (context) => {
             throw Error('CRYPTLEX_ACCESS_TOKEN was not found in environment variables.');
         }
 
+        if (typeof (CRYPTLEX_WEB_API_BASE_URL) !== 'string') {
+            throw Error('CRYPTLEX_WEB_API_BASE_URL was not found in environment variables.');
+        }
+
         /** Instantiate Web API client */
-        const CtlxClient = createClient<paths>({ baseUrl: "https://api.cryptlex.com" });
+        const CtlxClient = createClient<paths>({ baseUrl: CRYPTLEX_WEB_API_BASE_URL });
         /** Register middleware for authentication */
         CtlxClient.use(getAuthMiddleware(CRYPTLEX_ACCESS_TOKEN));
 
