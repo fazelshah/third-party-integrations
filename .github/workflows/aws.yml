@@ -1,4 +1,5 @@
 name: Deploy AWS Lambda
+
 on: 
   workflow_dispatch:
     inputs:
@@ -10,6 +11,7 @@ on:
         options:
           - stripe
           - fastspring
+
 jobs:
   deploy:
     name: Build and deploy lambda
@@ -27,15 +29,13 @@ jobs:
       - name: Install dependencies and build
         run: |
           npm ci
-          npm run build:${{ input.payment-platform }}:aws
+          npm run build:${{ github.event.inputs.payment-platform }}:aws
 
       - name: Zip lambda bundle
-        uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r -j bundle.zip dist
+        run: zip -qq -r bundle.zip dist
 
       - name: Deploy Lambda Function
         uses: aws-actions/aws-lambda-deploy@v1
         with:
           function-name: my-lambda-function
-          code-artifacts-dir: ./dist
+          zip-file: bundle.zip   # 👈 use the zip you just created
