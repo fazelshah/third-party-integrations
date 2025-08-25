@@ -1,16 +1,24 @@
-name: Deploy AWS Lambda
+name: Deploy Integration to AWS Lambda
 
 on: 
   workflow_dispatch:
     inputs:
-      payment-platform:
-        description: 'The payment platform to be integrated with'
-        required: true
-        default: 'stripe'
+      integration_name:
         type: choice
+        description: 'Integration Name' 
+        required: true
         options:
           - stripe
           - fastspring
+      function_name:
+        type: choice
+        description: 'AWS Lambda Function Name' 
+        required: true
+        options:
+          - stripeIntegrationDev
+          - fastspringIntegrationDev
+          - fabcadStripeIntegration
+          - supmanfastspringInteggration
 
 jobs:
   deploy:
@@ -21,15 +29,20 @@ jobs:
         with:
           ref: 'main'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22.x
+      -   name: Setup Node.js
+          uses: actions/setup-node@v3
+          with:
+           node-version: 22.x
 
       - name: Install dependencies and build
         run: |
           npm ci
-          npm run build:${{ github.event.inputs.payment-platform }}:aws
+          npm run build:${{ github.event.inputs.integration_name }}:aws
+
+      - name: Zip lambda bundle
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r -j bundle.zip dist
 
       # 🔹 Configure AWS credentials from GitHub Secrets
       - name: Configure AWS credentials
@@ -69,11 +82,12 @@ jobs:
           fi
 
       # 🔹 Deploy Lambda Function (create if missing, update if exists)
-      - name: Deploy Lambda Function
-        uses: aws-actions/aws-lambda-deploy@v1
+      - name: Deploy lambda
+        uses: appleboy/lambda-action@v0.2.0
         with:
-          function-name: fastspring
-          code-artifacts-dir: ./dist
+          aws_access_key_id: ${{ secrets.AWS_LAMBDA_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_LAMBDA_SECRET_ACCESS_KEY }}
+          aws_region: 'us-east-1'
+          function_name: ${{ github.event.inputs.function_name }}
+          zip_file: bundle.zip
           runtime: nodejs22.x
-          handler: index.handler
-          role: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/MyLambdaExecutionRole
