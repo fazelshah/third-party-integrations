@@ -72,7 +72,7 @@ jobs:
       - name: Deploy Lambda Function
         uses: aws-actions/aws-lambda-deploy@v1
         with:
-          function-name: my-lambda-function
+          function-name: stripe-function
           code-artifacts-dir: ./dist
           runtime: nodejs22.x
           handler: index.handler
