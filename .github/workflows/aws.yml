@@ -31,11 +31,8 @@ jobs:
           npm ci
           npm run build:${{ github.event.inputs.payment-platform }}:aws
 
-      - name: Zip lambda bundle
-        run: zip -qq -r bundle.zip dist
-
       - name: Deploy Lambda Function
         uses: aws-actions/aws-lambda-deploy@v1
         with:
           function-name: my-lambda-function
-          zip-file: bundle.zip   # 👈 use the zip you just created
+          code-artifacts-dir: ./dist   # 👈 directory with build output
