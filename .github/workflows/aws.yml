@@ -54,6 +54,7 @@ jobs:
         uses: aws-actions/aws-lambda-deploy@v1
         with:
           function-name: ${{ github.event.inputs.function_name }}
-          zip-file: bundle.zip
+          code-artifacts-dir: dist
           runtime: nodejs22.x
           handler: index.handler
+
