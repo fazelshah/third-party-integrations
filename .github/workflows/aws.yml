@@ -1,25 +1,20 @@
 name: Deploy AWS Lambda
 
-on: 
+on:
   workflow_dispatch:
-    inputs:
-      payment-platform:
-        description: 'The payment platform to be integrated with'
-        required: true
-        default: 'stripe'
-        type: choice
-        options:
-          - stripe
-          - fastspring
 
 jobs:
   deploy:
-    name: Build and deploy lambda
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          ref: 'main'
+          role-to-assume: arn:aws:iam::123456789012:role/GitHubActionRole
+          aws-region: us-east-1
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -29,17 +24,16 @@ jobs:
       - name: Install dependencies and build
         run: |
           npm ci
-          npm run build:${{ github.event.inputs.payment-platform }}:aws
+          npm run build:stripe:aws   # or fastspring depending on input
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_LAMBDA_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{ secrets.AWS_LAMBDA_SECRET_ACCESS_KEY}}
-          aws-region: us-east-1   # 👈 update to your Lambda's region
+      - name: Zip Lambda bundle
+        run: zip -qq -r -j bundle.zip dist
 
       - name: Deploy Lambda Function
         uses: aws-actions/aws-lambda-deploy@v1
         with:
           function-name: my-lambda-function
           code-artifacts-dir: ./dist
+          runtime: nodejs22.x
+          handler: index.handler
+          role: arn:aws:iam::116976060316:role/lambda-execution-role
